@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS `company` (
+  `id` INT NOT NULL COMMENT '公司ID',
+  `name` VARCHAR NOT NULL COMMENT '公司名'
+);

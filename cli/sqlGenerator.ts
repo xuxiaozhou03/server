@@ -1,5 +1,8 @@
-function genSQL(table) {
-  const fields = table.fields.map((f) => {
+import fs from "fs";
+import path from "path";
+
+export function genSQL(table: any): string {
+  const fields = table.fields.map((f: any) => {
     let line = `\`${f.field}\` ${f.type.toUpperCase()}`;
     if (f.length) line += `(${f.length})`;
     if (f.unsigned) line += " UNSIGNED";
@@ -11,7 +14,7 @@ function genSQL(table) {
     if (f.comment) line += ` COMMENT '${f.comment}'`;
     return line;
   });
-  table.fields.forEach((f) => {
+  table.fields.forEach((f: any) => {
     if (f.foreignKey) {
       fields.push(
         `FOREIGN KEY (\`${f.field}\`) REFERENCES \`${f.foreignKey.referencedTable}\`(\`${f.foreignKey.referencedColumn}\`)`
@@ -22,5 +25,3 @@ function genSQL(table) {
     ",\n  "
   )}\n);`;
 }
-
-module.exports = { genSQL };

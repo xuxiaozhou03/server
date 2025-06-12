@@ -1,13 +1,13 @@
-const ts = require("typescript");
+import * as ts from "typescript";
 
-function extractTables(tsContent, filePath) {
+export function extractTables(tsContent: string, filePath: string): any[] {
   const source = ts.createSourceFile(
     filePath,
     tsContent,
     ts.ScriptTarget.ES2015,
     true
   );
-  const tables = [];
+  const tables: any[] = [];
   source.forEachChild((node) => {
     if (ts.isVariableStatement(node)) {
       const decl = node.declarationList.declarations[0];
@@ -41,5 +41,3 @@ function extractTables(tsContent, filePath) {
   });
   return tables;
 }
-
-module.exports = { extractTables };

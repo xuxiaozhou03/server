@@ -1,5 +1,5 @@
-function genSwagger(tables) {
-  const paths = {};
+export function genSwagger(tables: any[]): any {
+  const paths: any = {};
   tables.forEach((table) => {
     const name = table.name;
     paths[`/${name}`] = {
@@ -33,5 +33,3 @@ function genSwagger(tables) {
     paths,
   };
 }
-
-module.exports = { genSwagger };
