@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` INT NOT NULL COMMENT '用户ID',
-  `name` VARCHAR NOT NULL COMMENT '用户名',
-  `sex` VARCHAR COMMENT '性别'
-);
