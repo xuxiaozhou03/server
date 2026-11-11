@@ -1,9 +1,9 @@
-# Product Studio 产品说明（讨论稿）
+# Product Studio 产品说明
 
-> 状态：讨论稿，架构方向已确认 3 项
+> 状态：产品方向已确认，待进入实施
 > 更新日期：2026-11-11  
 > 适用范围：产品定位、系统边界、核心流程、交付规则与后续演进  
-> 说明：本文用于对齐产品理解，不等同于最终 PRD。第 3.3 节记录已确认的架构决策，第 20 节记录决策状态与仍需讨论的事项。
+> 说明：本文记录已确认的产品与架构决策。未确认内容会明确标注，不再把已决定事项留作开放问题。
 
 ---
 
@@ -79,7 +79,8 @@ Product Studio 与产品代码位于同一个 pnpm workspace，但在逻辑和�
 - 展示数据库设计和 Swagger 风格接口文档
 - 根据需求、页面、数据和接口生成交付计划草稿
 - 拆分前端、后端、契约、测试和文档任务
-- 人工确认后同步到 GitHub Issues、Linear 或 Jira
+- 在本地任务看板中管理工作项
+- 后续再扩展 GitHub Issues、Linear 或 Jira 同步
 - 生成测试计划和测试任务
 - 校验页面、数据库、OpenAPI 与代码之间的一致性
 - 追踪分支、PR、测试、验收和发布状态
@@ -90,7 +91,7 @@ Product Studio 与产品代码位于同一个 pnpm workspace，但在逻辑和�
 
 ### 3.3 已确认的架构决策
 
-以下三项已确认，后续目录和实施计划以此为准。
+以下决策已确认，后续目录和实施计划以此为准。
 
 #### 决策 1：采用 pnpm workspace，Product Studio 与产品代码共存
 
@@ -129,15 +130,16 @@ Studio 的读取、校验、分析、任务生成、测试生成和同步逻辑�
 #### 决策 3：原型与正式前端是两条独立资产
 
 - 原生 HTML 原型位于 `product/prototype`，继续使用原生 HTML/CSS/JS。
-- 正式前端直接建立在 `apps/web`，可以使用 Tailwind + shadcn。
+- 正式前端直接建立在 `apps/web`，固定采用 React + shadcn + Tailwind。
 - 两者独立安装依赖、独立构建、独立测试、独立演进。
-- 两者只共享设计 token、语义规范、OpenAPI 契约和必要的静态资源。
+- 两者只共享设计 token、组件与样式约束、OpenAPI 契约和必要的静态资源。
 - 正式前端的 React 组件库不得被原型反向依赖。
-- 原型用于需求沟通和交互验证，不被强制纳入正式前端构建链。
+- 原型只用于需求沟通和交互验证，不参与正式构建、正式测试和发布。
+- 正式前端固定采用 React + shadcn + Tailwind。
 
 ```text
 product/prototype     产品原型，原生 HTML/CSS/JS
-apps/web              正式前端，Tailwind + shadcn
+apps/web              正式前端，React + shadcn + Tailwind
 product/design        两者共享的设计源
 product/api           两者共享的接口契约
 ```
@@ -151,11 +153,13 @@ product/api           两者共享的接口契约
 3. **页面独立**：每个产品页面使用独立 HTML，不通过单页隐藏切换模拟多个页面。
 4. **设计先行**：先维护数据库、API、设计语言和验收标准，再同步产品或原型。
 5. **契约驱动**：数据库和 OpenAPI 是正式设计资产，页面必须显式声明关联。
-6. **原型与正式前端分离**：原型保持原生 HTML/CSS/JS；正式前端位于 `apps/web`，可使用 Tailwind + shadcn；两者只共享设计 token 与契约。
-7. **自动生成、人工确认**：自动拆分任务和测试，但创建外部任务前必须人工确认。
-8. **可追踪**：需求、页面、数据表、接口、代码、测试和 PR 必须能互相定位。
-9. **桌面端优先**：当前阶段只保证电脑端展示，不处理移动端和平板适配。
-10. **不做孤立功能**：每个新增功能都必须进入需求和技术闭环。
+6. **原型与正式前端分离**：原型保持原生 HTML/CSS/JS，不参与正式构建和测试；正式前端位于 `apps/web`，固定采用 React + shadcn + Tailwind；两者只共享 token、组件与样式约束、契约。
+7. **规则优先、AI 补全、人工确认**：第一版先由规则生成任务和测试草稿，再由 AI 补全，人工确认后才进入执行。
+8. **本地任务优先**：第一版使用本地任务看板，不先接入外部任务系统。
+9. **可追踪**：需求、页面、数据表、接口、代码、测试和 PR 必须能互相定位。
+10. **桌面端优先**：当前阶段只保证电脑端展示，不处理移动端和平板适配。
+11. **验收即完成**：需求只有在验收通过后才算完成，代码合并或测试通过本身不代表完成。
+12. **不做孤立功能**：每个新增功能都必须进入需求和技术闭环。
 
 ---
 
@@ -250,7 +254,7 @@ Product
 
 ### 8.2 需求详情
 
-用于讨论单个需求的完整上下文：
+需求详情使用 `/requirements/<requirement-id>`，页面继续使用 `/p/<page-id>`。用于讨论单个需求的完整上下文：
 
 - 背景与目标
 - 用户流程
@@ -302,24 +306,32 @@ Product
 
 ### 8.7 设计与组件
 
-- 展示颜色、排版、间距、圆角和状态
-- 展示正式组件清单和使用方式
-- 原型和正式前端共享同一套设计 token，但不共享 UI 组件实现
-- 提供可运行的组件预览，而不是只提供静态说明
+设计语言不是单纯的颜色表，而是一套可执行的组件与样式约束体系。
+
+- 正式前端技术选型固定为 React + shadcn + Tailwind
+- `design/tokens.json` 作为颜色、排版、间距、圆角、阴影和动效的唯一源
+- 生成 CSS 变量和正式前端主题，不在应用内重复维护颜色常量
+- `design/components.json` 维护组件清单、语义、变体、尺寸和状态
+- `design/rules.md` 维护页面布局、间距、层级、文案和交互约束
+- 原型和正式前端共享 token 与组件语义，但不共享 React 组件实现
+- Studio 提供组件预览和约束检查，而不只是静态色板
 
 ### 8.8 交付计划与任务
 
 - 以需求为维度展示任务依赖图
 - 区分前端、后端、契约、测试和文档任务
-- 支持人工确认后再同步外部项目管理工具
+- 第一版使用本地任务看板
+- 任务由规则生成草稿、AI 补全，再经人工确认
+- 轻量文件作为交付计划事实源，SQLite 只用于本地运行态和查询
 - 展示任务与 PR、测试和验收的关系
 
 ### 8.9 测试与验收
 
+- 第一版覆盖验收用例、API 契约测试和 E2E
 - 验收标准到测试用例的映射
 - 展示测试类型、覆盖范围和执行结果
 - 汇总失败项和未覆盖的验收标准
-- 将测试结果作为需求完成和发布的依据
+- 验收通过是需求完成的唯一判断标准
 
 ---
 
@@ -348,7 +360,7 @@ Product
 /p/design
 ```
 
-需求、任务和测试建议使用独立命名空间：
+需求和交付对象使用独立命名空间：
 
 ```text
 /requirements/<requirement-id>
@@ -356,7 +368,7 @@ Product
 /tests/<test-id>
 ```
 
-当前实现中，`/p/:requirementId` 与页面路由共用命名空间。建议后续调整，避免页面 ID 和需求 ID 冲突。
+需求详情必须从 `/p/:requirementId` 迁移到 `/requirements/<requirement-id>`。页面继续保持 `/p/<page-id>`，两类 ID 不再混用同一命名空间。
 
 ---
 
@@ -371,9 +383,10 @@ product-repository/
 │   ├── requirements/
 │   │   └── requirements.json        # 需求、页面改动和验收标准
 │   ├── design/
-│   │   ├── tokens.json              # 颜色、字号、间距、圆角、阴影
-│   │   ├── components.json          # 组件清单、语义与状态
-│   │   └── preview.html             # 原型设计语言预览
+│   │   ├── tokens.json              # 颜色、字号、间距、圆角、阴影，唯一设计源
+│   │   ├── components.json          # 组件清单、变体、尺寸和状态约束
+│   │   ├── rules.md                 # 布局、层级、文案和交互样式约束
+│   │   └── preview.html             # 组件与约束预览
 │   ├── database/
 │   │   └── schema.json              # 数据库设计
 │   ├── api/
@@ -384,20 +397,23 @@ product-repository/
 │   │   ├── customers.html
 │   │   └── shared/
 │   ├── delivery/
-│   │   ├── plan.json                # 需求到任务的交付图
-│   │   └── tests.json               # 验收标准到测试用例的映射
+│   │   ├── plan.json                # 需求到任务的交付图，事实源
+│   │   └── tests.json               # 验收标准到测试用例的映射，事实源
+│   ├── .studio/
+│   │   └── studio.sqlite            # 本地任务、执行和查询缓存，不提交
 │   └── releases/
 │       └── release-notes.md
 ├── apps/
-│   ├── studio/                      # Product Studio Web，可独立部署
-│   ├── web/                         # 正式前端，可使用 Tailwind + shadcn
+│   ├── studio/                      # Product Studio Web，React + 独立部署
+│   ├── web/                         # 正式前端，React + shadcn + Tailwind
 │   └── api/                         # 正式后端
 ├── packages/
-│   ├── studio-core/                 # Studio 的读取、校验、分析、生成和同步逻辑
+│   ├── studio-core/                 # Studio 的读取、校验、分析、生成和本地任务逻辑
 │   ├── studio-cli/                  # 稳定后提供的 CLI，只调用 studio-core
+│   ├── studio-store/                # 文件事实源与 SQLite 运行态的同步层
 │   ├── contracts/                   # OpenAPI 生成的前后端共享类型
 │   ├── design-tokens/               # token 生成、CSS 变量和主题适配
-│   └── ui/                          # 正式前端组件库，不被原型依赖
+│   └── ui/                          # 正式前端 shadcn 组件，不被原型依赖
 ├── tests/
 │   ├── contract/
 │   ├── integration/
@@ -421,7 +437,11 @@ apps/web ────────┬──> packages/contracts
 apps/api ────────┬──> packages/contracts
                  └──> product/database
 
-product/prototype ───> product/design（仅共享 token 与静态规范）
+apps/studio ─────┬──> packages/studio-store
+apps/studio-cli ─┤
+                 └──> product/delivery（读取计划，写入经人工确认）
+
+product/prototype ───> product/design（仅共享 token 与样式约束）
 ```
 
 约束：
@@ -431,19 +451,43 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 - `apps/web` 不得依赖 `product/prototype` 的脚本或样式实现。
 - `product/prototype` 不得依赖 `apps/web` 的 React 组件。
 - 产品事实只保存在 `product/`，应用和包只读取或验证，不维护平行副本。
+- 交付计划以 `delivery/plan.json` 为事实源，SQLite 不得成为第二份人工维护数据。
 
 ---
 
 ## 11. 产品配置与事实源
 
-建议只维护一份页面清单，由 Node 服务、导航和校验器共同读取。
+产品清单采用根目录的 `product.manifest.json`，作为产品、页面、导航、体验配置和资产路径的唯一清单。
+
+它满足以下表达要求：
+
+- 一个文件能说明“这是什么产品、有哪些页面、入口在哪里”
+- Node 服务、Studio、导航、校验器和 CLI 都读取同一份清单
+- 页面 ID、文件路径、路由和标题不重复硬编码
+- 产品定位、版本、状态和更新时间有明确字段
+- 设计、数据库、API、交付计划和测试计划的位置可被发现
+- 后续新增页面或资产不需要同时修改多个服务文件
+
+`meta.json` 不再作为独立产品清单扩展，避免形成两个入口。产品元信息合并进 `product.manifest.json`。
 
 示意：
 
 ```json
 {
-  "productId": "demo-order",
+  "id": "demo-order",
   "name": "订单运营中心",
+  "version": "1.3.0",
+  "status": "prototype",
+  "updatedAt": "2026-11-11",
+  "assets": {
+    "requirements": "product/requirements/requirements.json",
+    "design": "product/design",
+    "schema": "product/database/schema.json",
+    "openapi": "product/api/openapi.json",
+    "prototype": "product/prototype",
+    "delivery": "product/delivery/plan.json",
+    "tests": "product/delivery/tests.json"
+  },
   "pages": {
     "dashboard": {
       "file": "dashboard.html",
@@ -468,24 +512,53 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 - 导航由页面清单生成
 - 需求、页面、数据表和接口的引用必须经过校验
 
-各类事实源建议如下：
+各类事实源如下：
 
 | 资产 | 唯一事实源 |
 | --- | --- |
-| 页面和导航 | `product.manifest.json` |
-| 需求与验收 | `requirements.json` |
-| 设计语言 | `design/tokens.json` |
-| 组件规范 | `design/components.json` |
-| 数据库设计 | `database/schema.json` |
-| API 契约 | `api/openapi.json` |
-| 交付任务 | `delivery/plan.json` |
-| 测试计划 | `delivery/tests.json` |
+| 产品元信息、页面、导航和资产索引 | `product.manifest.json` |
+| 需求与验收 | `product/requirements/requirements.json` |
+| 设计 token 与主题 | `product/design/tokens.json` |
+| 组件和样式约束 | `product/design/components.json`、`product/design/rules.md` |
+| 数据库设计 | `product/database/schema.json` |
+| API 契约 | `product/api/openapi.json` |
+| 交付计划 | `product/delivery/plan.json` |
+| 测试计划 | `product/delivery/tests.json` |
+
+SQLite 的边界：
+
+- `product/delivery/*.json` 是可审阅、可提交、可合并的交付事实源。
+- `.studio/studio.sqlite` 是 Studio 的本地运行态，用于任务看板查询、执行记录、索引和缓存。
+- SQLite 数据可以由文件事实源重建；删除数据库不会丢失产品定义。
+- 需要持久化的计划、任务和测试变更，必须回写对应文件后再同步 SQLite。
+- SQLite 文件不提交到 Git。
 
 ---
 
-## 12. 设计语言
+## 12. 设计语言与组件约束
 
-设计语言采用 Tailwind + shadcn 的语义和视觉风格，但原型不依赖这些第三方包。
+正式前端技术选型已确认：
+
+```text
+React + shadcn + Tailwind
+```
+
+设计语言采用上述体系的语义和视觉风格。原型不依赖这些第三方包，但必须复用同一套 token 与组件语义。
+
+设计语言由三部分组成：
+
+| 文件 | 负责内容 |
+| --- | --- |
+| `design/tokens.json` | 颜色、排版、间距、圆角、阴影和动效，唯一设计源 |
+| `design/components.json` | 组件清单、变体、尺寸、状态和不可用组合 |
+| `design/rules.md` | 页面布局、间距、层级、文案、交互和可访问性约束 |
+
+`design/tokens.json` 生成：
+
+- CSS 变量
+- Tailwind 主题配置
+- 正式前端主题
+- 原型共享样式变量
 
 设计 token 至少包含：
 
@@ -496,7 +569,7 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 - 动效和焦点状态
 - 明暗主题预留能力
 
-组件清单至少包含：
+组件清单和样式约束至少包含：
 
 - Button
 - Input / Select / Checkbox
@@ -510,7 +583,13 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 - Error State
 - Toast
 
-正式前端可以使用 Tailwind + shadcn；原生 HTML 原型只复用同一套 token 和组件语义。
+约束：
+
+- 颜色、间距、圆角、阴影不得在页面中随意硬编码
+- 组件变体和状态必须在 `components.json` 中登记
+- 正式前端通过 shadcn 使用受控组件
+- 原生 HTML 原型只复用 token 和组件语义，不引入 React 或 shadcn
+- Studio 需要能检查未登记组件、硬编码 token 和不规范状态
 
 ---
 
@@ -529,16 +608,25 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 
 ### 13.2 生成流程
 
+第一版采用“规则生成 + AI 补全 + 人工确认”：
+
 ```text
 读取需求和验收标准
-→ 分析影响页面、数据表和接口
-→ 生成交付计划草稿
-→ 标注任务依赖和风险
+→ 规则分析影响页面、数据表和接口
+→ 生成前端、后端、契约和测试任务草稿
+→ AI 补全任务描述、影响文件和风险
+→ 标注任务依赖
 → 人工确认
-→ 创建外部任务
+→ 写入本地任务看板
 ```
 
-不建议由模型直接无审核创建外部任务。
+约束：
+
+- 规则负责稳定、可解释的拆分骨架
+- AI 只补全，不绕过规则直接创造任务类型
+- 人工确认前，任务状态必须是 `draft`
+- 第一版只创建本地任务，不自动写入外部系统
+- 每个 AI 补全结果都必须能追溯到需求、验收标准和影响资产
 
 ### 13.3 任务字段
 
@@ -578,16 +666,16 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 
 ## 14. 测试模型
 
-测试从需求阶段开始，而不是开发完成后补充。
+测试从需求阶段开始，而不是开发完成后补充。第一版必须覆盖：
 
 ```text
 验收标准
-├── 手工验收用例
+├── 验收用例
 ├── API 契约测试
-├── 前后端集成测试
-├── 关键路径 E2E 测试
-└── 非功能测试（按需）
+└── 关键路径 E2E 测试
 ```
+
+前后端集成测试可以按需求补充，但不是第一版必须单独建立的一层。原生 HTML 原型不参与正式测试。
 
 每个测试用例建议包含：
 
@@ -601,7 +689,7 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 - 最近执行结果
 - 对应证据
 
-测试任务与开发任务同时生成，确保测试不是遗漏项。
+测试任务与开发任务同时生成，确保测试不是遗漏项。需求只有在全部验收用例通过后才能标记完成。
 
 ---
 
@@ -618,17 +706,23 @@ product/prototype ───> product/design（仅共享 token 与静态规范）
 9. 每个需求必须有验收用例。
 10. 合并前必须执行契约校验、自动化测试和关键页面检查。
 
-建议的质量门禁：
+质量门禁分为“可合并”和“需求完成”两级：
 
 ```text
+可合并：
 Schema 合法
 → OpenAPI 合法
 → 页面引用完整
-→ 契约无破坏性变化
-→ 单元/集成测试通过
+→ API 契约测试通过
 → 关键 E2E 通过
+
+需求完成：
+全部验收用例通过
 → 验收证据齐全
+→ 人工确认验收结果
 ```
+
+代码合并和自动化测试通过是完成的前置条件，不是完成本身。需求完成状态以验收通过为准；发布属于完成后的交付动作。
 
 ---
 
@@ -653,11 +747,10 @@ Schema 合法
 2. 页面清单、服务端路由和校验规则仍存在多处硬编码。
 3. 工作台、原型和设计页各自维护近似但不完全一致的设计 token。
 4. 还没有独立的 `studio-core`，当前展示与校验能力尚未形成可复用核心。
-5. 还没有正式的交付计划、任务依赖图和任务状态。
-6. 还没有验收标准到测试用例的映射。
-7. 还没有 GitHub Issues、Linear、Jira、PR 和 CI 的状态同步。
-8. 需求详情与页面路由仍共用 `/p/` 命名空间。
-9. `npm run validate` 仍包含旧页面模型规则，与当前需求中心入口存在冲突。
+5. 还没有正式的交付计划、任务依赖图和本地任务看板。
+6. 还没有验收标准到测试用例的映射，以及契约测试和 E2E 覆盖。
+7. 需求详情与页面路由仍共用 `/p/` 命名空间。
+8. `npm run validate` 仍包含旧页面模型规则，与当前需求中心入口存在冲突。
 
 这些问题不影响继续讨论产品方向，但在进入正式开发前应优先收敛。
 
@@ -679,19 +772,20 @@ Schema 合法
 ### 阶段 1：产品与技术闭环
 
 - 需求中心
-- 需求详情
-- 页面工作台
+- `/requirements/<requirement-id>` 需求详情
+- `/p/<page-id>` 页面工作台
 - 数据库设计
 - API 设计与接口文档
-- 设计与组件预览
+- React + shadcn + Tailwind 设计语言、组件和样式约束预览
 
 ### 阶段 2：交付闭环
 
-- 交付计划生成
-- 人工确认
-- 前端、后端、契约、测试任务拆分
-- 任务看板和依赖图
-- 验收标准到测试用例的映射
+- `delivery/plan.json` 交付计划
+- 规则生成 + AI 补全 + 人工确认
+- 本地任务看板和依赖图
+- 文件事实源与 SQLite 运行态同步
+- 验收用例、API 契约测试和 E2E 映射
+- 验收通过后更新需求完成状态
 - PR 与需求追踪
 
 ### 阶段 3：外部集成
@@ -711,9 +805,12 @@ Schema 合法
 - 启动或连接本地数据库
 - 用单 HTML 隐藏切换模拟多个页面
 - 用 Markdown 文档替代可运行产品
-- 为原型引入 React、Tailwind、shadcn、Vite 或 CDN
-- 让模型未经确认直接创建外部任务
-- 用一个系统替代 GitHub、Jira 或 CI
+- 为原生 HTML 原型引入 React、Tailwind、shadcn、Vite 或 CDN
+- 让模型未经确认直接创建任务或写入外部系统
+- 第一版接入 GitHub Issues、Linear 或 Jira
+- 让原生 HTML 原型参与正式构建、正式测试和发布
+- 在 `tokens.json` 之外维护另一套正式主题色
+- 把 SQLite 当作人工维护的第二份产品事实源
 - 优先处理移动端和平板适配
 
 ---
@@ -728,30 +825,46 @@ Schema 合法
 - 一个需求是否能生成完整且可执行的任务依赖图
 - 验收标准是否全部映射到测试用例
 - PR 是否能追溯需求和验收证据
-- 原型、设计语言和正式前端是否使用一致的 token
+- 原型、设计语言和正式前端是否使用一致的 token 与组件语义
+- 是否覆盖验收用例、API 契约测试和关键 E2E
+- 需求是否只有在验收通过后才标记完成
 - 需求从设计到发布的每一步是否有状态和证据
 
 ---
 
-## 20. 架构决策与待讨论事项
+## 20. 已确认决策
 
-以下 3 项已经确认：
+以下事项已全部确认，不作为开放问题保留。
 
-1. **Product Studio 与产品代码共用一个 pnpm workspace。** Studio 先作为 `apps/studio` 开发和调试，稳定后通过 `packages/studio-cli` 提供 CLI；两者共享 `packages/studio-core`。Studio 可以作为独立部署单元，但不先拆仓库。
-2. **产品仓同时包含正式前后端代码。** 正式前端位于 `apps/web`，正式后端位于 `apps/api`，与产品、设计、原型和契约同仓。
-3. **原型与正式前端是两条独立资产。** 原型位于 `product/prototype`，保持原生 HTML/CSS/JS；正式前端直接建立在 `apps/web`，可以使用 Tailwind + shadcn。两者只共享设计 token、契约和规范。
+### 20.1 工程与资产
 
-以下问题仍需进一步确认：
+1. **协作方式**：一个单产品 pnpm workspace，同时包含产品、正式前后端和 Product Studio。
+2. **Studio 形态**：先在 `apps/studio` 开发和调试，稳定后通过 `packages/studio-cli` 提供 CLI；两者共享 `packages/studio-core`。
+3. **代码范围**：产品仓同时包含正式前端、正式后端、产品、设计、原型和契约。
+4. **原型边界**：原型与正式前端是两条独立资产；原型不参与正式构建和测试。
+5. **正式前端**：直接建立在 `apps/web`，固定采用 React + shadcn + Tailwind。
+6. **产品清单**：采用根目录 `product.manifest.json`，合并原 `meta.json` 中的产品元信息。
+7. **设计语言**：`design/tokens.json` 是颜色、排版、间距、圆角、阴影和动效的唯一源，并生成 CSS 变量与正式前端主题；`components.json` 和 `rules.md` 维护组件及样式约束。
 
-4. 产品清单文件采用 `product.manifest.json`、`meta.json` 扩展，还是其他命名？
-5. 需求详情是否迁移到 `/requirements/<id>`，页面继续使用 `/p/<page-id>`？
-6. 设计语言是否以 `design/tokens.json` 为唯一源，并生成 CSS 变量和正式前端主题？
-7. 交付计划是产品仓内的 `delivery/plan.json`，还是由 Studio 单独维护？
-8. 第一版任务系统先接 GitHub Issues，还是先做本地任务看板？
-9. 自动任务拆分第一版采用规则、AI，还是“规则生成 + AI 补全 + 人工确认”？
-10. 测试第一版覆盖到什么层级：验收用例、API 契约测试，还是同时包含 E2E？
-11. 原型是否只承担展示和交互验证，不参与正式构建与测试？
-12. 产品完成状态的判断标准是什么：代码合并、测试通过、验收通过，还是已经发布？
+### 20.2 路由与交付
+
+8. **路由**：需求详情使用 `/requirements/<requirement-id>`；页面继续使用 `/p/<page-id>`。
+9. **交付计划**：使用产品仓内的轻量文件 `product/delivery/plan.json` 作为事实源；使用 `.studio/studio.sqlite` 保存本地任务看板的任务、执行记录和查询缓存；SQLite 可由文件重建，不提交。
+10. **任务管理**：第一版使用本地任务看板，不先对接 GitHub Issues、Linear 或 Jira。
+11. **任务拆分**：采用“规则生成 + AI 补全 + 人工确认”；未经确认的任务保持 `draft`。
+12. **测试范围**：第一版覆盖验收用例、API 契约测试和 E2E。
+13. **完成标准**：验收通过是需求完成的唯一判断标准；代码合并、测试通过和发布都不是完成标准本身。
+
+### 20.3 仍需后续细化但不再是方向性问题
+
+以下内容属于实施方案，不影响当前产品方向：
+
+- `product.manifest.json` 的具体 JSON Schema
+- `delivery/plan.json` 与 `delivery/tests.json` 的字段设计
+- SQLite 表结构和同步策略
+- AI 补全使用哪个模型及调用方式
+- 本地任务看板的交互细节
+- 外部任务系统接入时间
 
 ---
 
@@ -772,16 +885,19 @@ Schema 合法
 
 已确认新增：
 
-- `apps/studio` 作为 Product Studio Web 应用
+- `apps/studio` 作为 React Product Studio Web 应用
 - `packages/studio-core` 作为可复用核心能力
 - `packages/studio-cli` 作为稳定后的 CLI 入口
-- 正式前端 `apps/web`
+- 正式前端 `apps/web`，采用 React + shadcn + Tailwind
 - 正式后端 `apps/api`
-- 统一产品清单
-- 统一下发设计 token
-- 交付计划与任务依赖图
-- 验收到测试的映射
-- PR、测试和发布的追踪
+- 根目录 `product.manifest.json` 作为唯一产品清单
+- `design/tokens.json` 作为唯一设计 token 源
+- 组件规范和样式约束
+- `product/delivery/plan.json` 交付计划与本地 SQLite 运行态
+- 规则生成 + AI 补全 + 人工确认
+- 本地任务看板
+- 验收用例、API 契约测试和 E2E
+- 验收通过作为需求完成标准
 
 已确认的逻辑边界：
 
@@ -789,6 +905,7 @@ Schema 合法
 - Product Studio 的 Web 与 CLI 共用 `studio-core`
 - 原生 HTML 原型与正式前端代码分离
 - 产品事实源与外部项目管理工具分离
+- 交付文件是事实源，SQLite 是可重建的本地运行态
 - Product Studio 可以独立部署，但不先拆成独立仓库
 
 最终目标：
