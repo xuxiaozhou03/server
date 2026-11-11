@@ -1,9 +1,9 @@
 # Product Studio 产品说明（讨论稿）
 
-> 状态：讨论稿  
+> 状态：讨论稿，架构方向已确认 3 项
 > 更新日期：2026-11-11  
 > 适用范围：产品定位、系统边界、核心流程、交付规则与后续演进  
-> 说明：本文用于对齐产品理解，不等同于最终 PRD。文末列出了需要继续讨论的决策点。
+> 说明：本文用于对齐产品理解，不等同于最终 PRD。第 3.3 节记录已确认的架构决策，第 20 节记录决策状态与仍需讨论的事项。
 
 ---
 
@@ -11,10 +11,12 @@
 
 **Product Studio 是一套以需求为主线、连接产品设计、前后端实现、测试与交付的研发辅助系统。**
 
-它由一个“单产品交付仓”和一个“研发辅助控制面”组成：
+它采用**单仓库、pnpm workspace、单产品**的组织方式：
 
-- 产品交付仓保存产品事实：需求、页面、设计语言、数据库设计、API 契约、原型、正式代码、测试和发布记录。
+- 产品交付区保存产品事实：需求、页面、设计语言、数据库设计、API 契约、原型、正式代码、测试和发布记录。
 - Product Studio 读取这些事实，负责展示、关联、拆分、检查和追踪。
+- Product Studio 先以 Web 应用形态开发和调试，稳定后通过同一套核心能力提供 CLI。
+- 正式前端和正式后端都位于同一工作区；原生 HTML 原型是独立资产。
 
 核心目标不是展示更多页面，而是建立一条可追踪、可验证的交付链路：
 
@@ -44,14 +46,14 @@ Product Studio 要解决的不是“如何画更多原型”，而是：
 
 ## 3. 产品定位
 
-### 3.1 产品交付仓
+### 3.1 单产品工作区
 
-一个仓库只承载一个产品，是产品事实的唯一来源。
+一个仓库只承载一个产品，是产品事实的唯一来源。产品区同时包含正式前端、正式后端、产品定义、设计语言、原型、契约、测试和交付记录。
 
-产品仓建议包含：
+产品工作区包含：
 
 ```text
-产品仓
+单产品 pnpm workspace
 ├── 产品元信息与页面清单
 ├── 需求、业务流程与验收标准
 ├── 设计语言与组件规范
@@ -60,13 +62,15 @@ Product Studio 要解决的不是“如何画更多原型”，而是：
 ├── 原生 HTML 产品原型
 ├── 正式前端代码
 ├── 正式后端代码
+├── Product Studio Web 应用
+├── Product Studio 核心能力与后续 CLI
 ├── 测试与验收用例
 └── 发布与交付记录
 ```
 
 ### 3.2 Product Studio 辅助服务
 
-Product Studio 不拥有另一套产品事实，只读取和操作产品仓中的资产。
+Product Studio 与产品代码位于同一个 pnpm workspace，但在逻辑和运行边界上保持独立。它不拥有另一套产品事实，只读取和操作工作区中的产品资产。
 
 它负责：
 
@@ -82,7 +86,61 @@ Product Studio 不拥有另一套产品事实，只读取和操作产品仓中�
 
 一句话边界：
 
-> **产品仓负责“真相”，Product Studio 负责“组织、检查、拆分和追踪”。**
+> **产品区负责“真相”，Product Studio 负责“组织、检查、拆分和追踪”。**
+
+### 3.3 已确认的架构决策
+
+以下三项已确认，后续目录和实施计划以此为准。
+
+#### 决策 1：采用 pnpm workspace，Product Studio 与产品代码共存
+
+- 不先拆成两个独立仓库。
+- 使用一个 pnpm workspace 承载单产品、正式前后端和 Product Studio。
+- Product Studio 先作为工作区内的 Web 应用开发和调试。
+- 稳定后提供 CLI，但不重新实现一套逻辑。
+- `studio-core` 从第一天独立存在，Web 和 CLI 都是它的适配层。
+- `apps/studio` 可以作为独立部署单元，但源代码仍位于当前工作区。
+
+目标结构不是“Web 应用以后改写成 CLI”，而是：
+
+```text
+apps/studio ──────┐
+                  ├──> packages/studio-core
+packages/studio-cli ┘
+```
+
+Studio 的读取、校验、分析、任务生成、测试生成和同步逻辑必须放在 `studio-core`，不能写在页面组件或 Web 路由中。
+
+#### 决策 2：产品仓同时包含正式前后端代码
+
+当前仓库同时包含：
+
+- 产品与需求
+- 设计语言与组件规范
+- 数据库设计与 OpenAPI 契约
+- 原生 HTML 原型
+- 正式前端 `apps/web`
+- 正式后端 `apps/api`
+- Product Studio `apps/studio`
+- 共享包、测试和交付记录
+
+因此，“一仓一产品”描述的是业务边界，不意味着仓库只能放原型。
+
+#### 决策 3：原型与正式前端是两条独立资产
+
+- 原生 HTML 原型位于 `product/prototype`，继续使用原生 HTML/CSS/JS。
+- 正式前端直接建立在 `apps/web`，可以使用 Tailwind + shadcn。
+- 两者独立安装依赖、独立构建、独立测试、独立演进。
+- 两者只共享设计 token、语义规范、OpenAPI 契约和必要的静态资源。
+- 正式前端的 React 组件库不得被原型反向依赖。
+- 原型用于需求沟通和交互验证，不被强制纳入正式前端构建链。
+
+```text
+product/prototype     产品原型，原生 HTML/CSS/JS
+apps/web              正式前端，Tailwind + shadcn
+product/design        两者共享的设计源
+product/api           两者共享的接口契约
+```
 
 ---
 
@@ -93,7 +151,7 @@ Product Studio 不拥有另一套产品事实，只读取和操作产品仓中�
 3. **页面独立**：每个产品页面使用独立 HTML，不通过单页隐藏切换模拟多个页面。
 4. **设计先行**：先维护数据库、API、设计语言和验收标准，再同步产品或原型。
 5. **契约驱动**：数据库和 OpenAPI 是正式设计资产，页面必须显式声明关联。
-6. **原型与正式产品分离**：原型保持原生 HTML/CSS/JS；正式前端可使用 Tailwind + shadcn。
+6. **原型与正式前端分离**：原型保持原生 HTML/CSS/JS；正式前端位于 `apps/web`，可使用 Tailwind + shadcn；两者只共享设计 token 与契约。
 7. **自动生成、人工确认**：自动拆分任务和测试，但创建外部任务前必须人工确认。
 8. **可追踪**：需求、页面、数据表、接口、代码、测试和 PR 必须能互相定位。
 9. **桌面端优先**：当前阶段只保证电脑端展示，不处理移动端和平板适配。
@@ -246,7 +304,7 @@ Product
 
 - 展示颜色、排版、间距、圆角和状态
 - 展示正式组件清单和使用方式
-- 原型和正式前端共享同一套设计 token
+- 原型和正式前端共享同一套设计 token，但不共享 UI 组件实现
 - 提供可运行的组件预览，而不是只提供静态说明
 
 ### 8.8 交付计划与任务
@@ -302,45 +360,77 @@ Product
 
 ---
 
-## 10. 产品仓推荐结构
+## 10. pnpm workspace 推荐结构
 
 ```text
 product-repository/
-├── product.manifest.json          # 产品、页面、导航和体验配置
-├── requirements/
-│   └── requirements.json          # 需求、页面改动和验收标准
-├── design/
-│   ├── tokens.json                # 颜色、字号、间距、圆角、阴影
-│   ├── components.json            # 组件清单、语义与状态
-│   └── preview.html               # 组件预览
-├── database/
-│   └── schema.json                # 数据库设计
-├── api/
-│   └── openapi.json               # API 契约
-├── prototype/
-│   ├── dashboard.html
-│   ├── orders.html
-│   ├── customers.html
-│   └── shared/                    # 原型原生 CSS/JS
-├── delivery/
-│   ├── plan.json                  # 需求到任务的交付图
-│   └── tests.json                 # 验收标准到测试用例的映射
+├── pnpm-workspace.yaml
+├── package.json                     # workspace 根脚本
+├── product.manifest.json            # 产品、页面、导航和体验配置
+├── product/
+│   ├── requirements/
+│   │   └── requirements.json        # 需求、页面改动和验收标准
+│   ├── design/
+│   │   ├── tokens.json              # 颜色、字号、间距、圆角、阴影
+│   │   ├── components.json          # 组件清单、语义与状态
+│   │   └── preview.html             # 原型设计语言预览
+│   ├── database/
+│   │   └── schema.json              # 数据库设计
+│   ├── api/
+│   │   └── openapi.json             # API 契约
+│   ├── prototype/                   # 独立资产：原生 HTML/CSS/JS
+│   │   ├── dashboard.html
+│   │   ├── orders.html
+│   │   ├── customers.html
+│   │   └── shared/
+│   ├── delivery/
+│   │   ├── plan.json                # 需求到任务的交付图
+│   │   └── tests.json               # 验收标准到测试用例的映射
+│   └── releases/
+│       └── release-notes.md
 ├── apps/
-│   ├── web/                       # 正式前端，可使用 Tailwind + shadcn
-│   └── api/                       # 正式后端
+│   ├── studio/                      # Product Studio Web，可独立部署
+│   ├── web/                         # 正式前端，可使用 Tailwind + shadcn
+│   └── api/                         # 正式后端
 ├── packages/
-│   ├── contracts/                 # OpenAPI 生成的共享类型
-│   └── ui/                        # 正式产品组件库
+│   ├── studio-core/                 # Studio 的读取、校验、分析、生成和同步逻辑
+│   ├── studio-cli/                  # 稳定后提供的 CLI，只调用 studio-core
+│   ├── contracts/                   # OpenAPI 生成的前后端共享类型
+│   ├── design-tokens/               # token 生成、CSS 变量和主题适配
+│   └── ui/                          # 正式前端组件库，不被原型依赖
 ├── tests/
 │   ├── contract/
 │   ├── integration/
 │   ├── e2e/
 │   └── acceptance/
-└── releases/
-    └── release-notes.md
+└── docs/
+    └── product-spec.md
 ```
 
-具体目录可以调整，但资产边界必须清楚。
+依赖方向必须保持单向：
+
+```text
+apps/studio ─────┐
+                 ├──> packages/studio-core
+packages/studio-cli ┘
+
+apps/web ────────┬──> packages/contracts
+                 ├──> packages/design-tokens
+                 └──> packages/ui
+
+apps/api ────────┬──> packages/contracts
+                 └──> product/database
+
+product/prototype ───> product/design（仅共享 token 与静态规范）
+```
+
+约束：
+
+- `studio-core` 不得依赖 `apps/studio` 的页面、组件或 Web 路由。
+- `studio-cli` 不得复制 Studio 的业务逻辑。
+- `apps/web` 不得依赖 `product/prototype` 的脚本或样式实现。
+- `product/prototype` 不得依赖 `apps/web` 的 React 组件。
+- 产品事实只保存在 `product/`，应用和包只读取或验证，不维护平行副本。
 
 ---
 
@@ -557,15 +647,17 @@ Schema 合法
 - Swagger 风格接口文档
 - 原生 HTML/CSS/JS，不依赖前端构建工具
 
-当前仍是 MVP，主要缺口包括：
+当前仍是 MVP，且尚未迁移为 pnpm workspace。主要缺口包括：
 
-1. 页面清单、服务端路由和校验规则仍存在多处硬编码。
-2. 工作台、原型和设计页各自维护近似但不完全一致的设计 token。
-3. 还没有正式的交付计划、任务依赖图和任务状态。
-4. 还没有验收标准到测试用例的映射。
-5. 还没有 GitHub Issues、Linear、Jira、PR 和 CI 的状态同步。
-6. 需求详情与页面路由仍共用 `/p/` 命名空间。
-7. `npm run validate` 仍包含旧页面模型规则，与当前需求中心入口存在冲突。
+1. 当前是单个 Node 服务，尚未建立 `apps/`、`packages/` 与 `product/` 的 workspace 边界。
+2. 页面清单、服务端路由和校验规则仍存在多处硬编码。
+3. 工作台、原型和设计页各自维护近似但不完全一致的设计 token。
+4. 还没有独立的 `studio-core`，当前展示与校验能力尚未形成可复用核心。
+5. 还没有正式的交付计划、任务依赖图和任务状态。
+6. 还没有验收标准到测试用例的映射。
+7. 还没有 GitHub Issues、Linear、Jira、PR 和 CI 的状态同步。
+8. 需求详情与页面路由仍共用 `/p/` 命名空间。
+9. `npm run validate` 仍包含旧页面模型规则，与当前需求中心入口存在冲突。
 
 这些问题不影响继续讨论产品方向，但在进入正式开发前应优先收敛。
 
@@ -573,12 +665,16 @@ Schema 合法
 
 ## 17. MVP 建议范围
 
-### 阶段 0：标准与基线
+### 阶段 0：工作区与架构基线
 
+- 迁移为 pnpm workspace
+- 建立 `product/`、`apps/studio`、`apps/web`、`apps/api` 和 `packages/`
+- 把展示、校验、分析能力抽到 `studio-core`
 - 统一产品清单
 - 统一需求、页面、数据表和接口的关联模型
 - 统一设计 token
 - 修复校验器与当前路由模型的冲突
+- 确认原型与正式前端完全独立
 
 ### 阶段 1：产品与技术闭环
 
@@ -637,13 +733,16 @@ Schema 合法
 
 ---
 
-## 20. 待讨论决策
+## 20. 架构决策与待讨论事项
 
-以下问题需要进一步确认，建议逐项讨论并在文档中定稿：
+以下 3 项已经确认：
 
-1. Product Studio 是否独立成一个仓库和部署单元，还是继续与产品仓共存？
-2. 产品仓是否同时包含正式前后端代码，还是仅包含产品、设计、原型和契约？
-3. 原型和正式前端是否是两条独立资产，正式前端是否直接以 `apps/web` 建立？
+1. **Product Studio 与产品代码共用一个 pnpm workspace。** Studio 先作为 `apps/studio` 开发和调试，稳定后通过 `packages/studio-cli` 提供 CLI；两者共享 `packages/studio-core`。Studio 可以作为独立部署单元，但不先拆仓库。
+2. **产品仓同时包含正式前后端代码。** 正式前端位于 `apps/web`，正式后端位于 `apps/api`，与产品、设计、原型和契约同仓。
+3. **原型与正式前端是两条独立资产。** 原型位于 `product/prototype`，保持原生 HTML/CSS/JS；正式前端直接建立在 `apps/web`，可以使用 Tailwind + shadcn。两者只共享设计 token、契约和规范。
+
+以下问题仍需进一步确认：
+
 4. 产品清单文件采用 `product.manifest.json`、`meta.json` 扩展，还是其他命名？
 5. 需求详情是否迁移到 `/requirements/<id>`，页面继续使用 `/p/<page-id>`？
 6. 设计语言是否以 `design/tokens.json` 为唯一源，并生成 CSS 变量和正式前端主题？
@@ -656,31 +755,41 @@ Schema 合法
 
 ---
 
-## 21. 当前建议结论
+## 21. 当前确认结论
 
-建议保留：
+已确认保留：
 
 - 一仓库一产品
+- 单仓库 pnpm workspace
+- 正式前后端同仓
 - 需求为中心
 - 独立页面
 - 数据库设计先行
 - OpenAPI 契约驱动
 - 原生 HTML 原型
+- 原型与正式前端独立
 - 桌面端优先
 
-建议新增：
+已确认新增：
 
+- `apps/studio` 作为 Product Studio Web 应用
+- `packages/studio-core` 作为可复用核心能力
+- `packages/studio-cli` 作为稳定后的 CLI 入口
+- 正式前端 `apps/web`
+- 正式后端 `apps/api`
 - 统一产品清单
 - 统一下发设计 token
 - 交付计划与任务依赖图
 - 验收到测试的映射
 - PR、测试和发布的追踪
 
-建议拆分：
+已确认的逻辑边界：
 
-- 产品仓与 Product Studio 辅助服务
-- 原生 HTML 原型与正式前后端代码
-- 产品事实源与外部项目管理工具
+- 产品事实源与 Product Studio 逻辑分离
+- Product Studio 的 Web 与 CLI 共用 `studio-core`
+- 原生 HTML 原型与正式前端代码分离
+- 产品事实源与外部项目管理工具分离
+- Product Studio 可以独立部署，但不先拆成独立仓库
 
 最终目标：
 
