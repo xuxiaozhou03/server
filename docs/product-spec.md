@@ -16,7 +16,7 @@
 - 产品交付区保存产品事实：需求、页面、设计语言、数据库设计、API 契约、原型、正式代码、测试和发布记录。
 - Product Studio 读取这些事实，负责展示、关联、拆分、检查和追踪。
 - Product Studio 先以 Web 应用形态开发和调试，稳定后通过同一套核心能力提供 CLI。
-- 正式前端和正式后端都位于同一工作区；原生 HTML 原型是独立资产。
+- 正式前端和正式后端都位于同一工作区；具体技术栈由产品仓配置，原生 HTML 原型是独立资产。
 
 核心目标不是展示更多页面，而是建立一条可追踪、可验证的交付链路：
 
@@ -130,19 +130,21 @@ Studio 的读取、校验、分析、任务生成、测试生成和同步逻辑�
 #### 决策 3：原型与正式前端是两条独立资产
 
 - 原生 HTML 原型位于 `product/prototype`，继续使用原生 HTML/CSS/JS。
-- 正式前端直接建立在 `apps/web`，固定采用 React + shadcn + Tailwind。
+- 正式前端直接建立在 `apps/web`；当前示例仓采用 React + Vite + shadcn + Tailwind。
 - 两者独立安装依赖、独立构建、独立测试、独立演进。
 - 两者只共享设计 token、组件与样式约束、OpenAPI 契约和必要的静态资源。
-- 正式前端的 React 组件库不得被原型反向依赖。
+- 正式前端的组件库不得被原型反向依赖。
 - 原型只用于需求沟通和交互验证，不参与正式构建、正式测试和发布。
-- 正式前端固定采用 React + shadcn + Tailwind。
+- 正式前端技术栈属于产品仓配置，当前示例仓采用 React + Vite + shadcn + Tailwind，后续产品可以替换。
 
 ```text
 product/prototype     产品原型，原生 HTML/CSS/JS
-apps/web              正式前端，React + shadcn + Tailwind
+apps/web              正式前端，当前示例为 React + Vite + shadcn + Tailwind
 product/design        两者共享的设计源
 product/api           两者共享的接口契约
 ```
+
+正式后端同样按产品仓配置。当前示例仓采用 Hono.js + SQLite + Prisma；后续产品可以替换为其他框架和数据库，而不改变 Product Studio 的产品模型。
 
 ---
 
@@ -153,7 +155,7 @@ product/api           两者共享的接口契约
 3. **页面独立**：每个产品页面使用独立 HTML，不通过单页隐藏切换模拟多个页面。
 4. **设计先行**：先维护数据库、API、设计语言和验收标准，再同步产品或原型。
 5. **契约驱动**：数据库和 OpenAPI 是正式设计资产，页面必须显式声明关联。
-6. **原型与正式前端分离**：原型保持原生 HTML/CSS/JS，不参与正式构建和测试；正式前端位于 `apps/web`，固定采用 React + shadcn + Tailwind；两者只共享 token、组件与样式约束、契约。
+6. **原型与正式前端分离**：原型保持原生 HTML/CSS/JS，不参与正式构建和测试；正式前端位于 `apps/web`，当前示例采用 React + Vite + shadcn + Tailwind；两者只共享 token、组件与样式约束、契约。
 7. **规则优先、AI 补全、人工确认**：第一版先由规则生成任务和测试草稿，再由 AI 补全，人工确认后才进入执行。
 8. **本地任务优先**：第一版使用本地任务看板，不先接入外部任务系统。
 9. **可追踪**：需求、页面、数据表、接口、代码、测试和 PR 必须能互相定位。
@@ -287,7 +289,7 @@ Product
 ### 8.4 数据库设计
 
 - 以表、字段、键、索引和关系为主
-- 只维护和展示设计，不启动或连接本地数据库
+- 只维护和展示设计，不由 Product Studio 启动或连接正式应用数据库
 - 支持从页面关联直接下钻到具体数据表
 
 ### 8.5 API 设计
@@ -308,7 +310,7 @@ Product
 
 设计语言不是单纯的颜色表，而是一套可执行的组件与样式约束体系。
 
-- 正式前端技术选型固定为 React + shadcn + Tailwind
+- 当前示例仓的正式前端选型为 React + Vite + shadcn + Tailwind
 - `design/tokens.json` 作为颜色、排版、间距、圆角、阴影和动效的唯一源
 - 生成 CSS 变量和正式前端主题，不在应用内重复维护颜色常量
 - `design/components.json` 维护组件清单、语义、变体、尺寸和状态
@@ -405,15 +407,15 @@ product-repository/
 │       └── release-notes.md
 ├── apps/
 │   ├── studio/                      # Product Studio Web，React + 独立部署
-│   ├── web/                         # 正式前端，React + shadcn + Tailwind
-│   └── api/                         # 正式后端
+│   ├── web/                         # 正式前端示例：React + Vite + shadcn + Tailwind
+│   └── api/                         # 正式后端示例：Hono.js + SQLite + Prisma
 ├── packages/
 │   ├── studio-core/                 # Studio 的读取、校验、分析、生成和本地任务逻辑
 │   ├── studio-cli/                  # 稳定后提供的 CLI，只调用 studio-core
 │   ├── studio-store/                # 文件事实源与 SQLite 运行态的同步层
 │   ├── contracts/                   # OpenAPI 生成的前后端共享类型
 │   ├── design-tokens/               # token 生成、CSS 变量和主题适配
-│   └── ui/                          # 正式前端 shadcn 组件，不被原型依赖
+│   └── ui/                          # 当前示例的 shadcn 组件，不被原型依赖
 ├── tests/
 │   ├── contract/
 │   ├── integration/
@@ -479,6 +481,19 @@ product/prototype ───> product/design（仅共享 token 与样式约束）
   "version": "1.3.0",
   "status": "prototype",
   "updatedAt": "2026-11-11",
+  "stack": {
+    "web": {
+      "framework": "react",
+      "build": "vite",
+      "ui": "shadcn",
+      "css": "tailwind"
+    },
+    "api": {
+      "framework": "hono",
+      "database": "sqlite",
+      "orm": "prisma"
+    }
+  },
   "assets": {
     "requirements": "product/requirements/requirements.json",
     "design": "product/design",
@@ -525,25 +540,34 @@ product/prototype ───> product/design（仅共享 token 与样式约束）
 | 交付计划 | `product/delivery/plan.json` |
 | 测试计划 | `product/delivery/tests.json` |
 
+技术栈的适用边界：
+
+- `stack` 描述当前产品仓实际使用的正式前后端技术栈，是产品配置的一部分，不是 Product Studio 的平台级硬约束。
+- Product Studio 只消费统一的能力描述，例如页面、数据模型、OpenAPI 和测试命令，不把 React、Vite、Hono 或 Prisma 写进核心流程。
+- 当前示例仓采用 React + Vite + shadcn + Tailwind 和 Hono.js + SQLite + Prisma，用于验证完整链路；后续产品可按自身约束替换。
+- 正式应用数据库是 `apps/api` 的运行时依赖，与 Studio 的本地任务缓存 SQLite 是两套独立数据库。
+- 数据库设计源与 Prisma schema 不得各维护一份。第一版以 `product/database/schema.json` 为设计事实源，`apps/api/prisma/schema.prisma` 是当前实现表示，必须通过生成或校验保持同步；具体同步方向在实施阶段确定。
+
 SQLite 的边界：
 
 - `product/delivery/*.json` 是可审阅、可提交、可合并的交付事实源。
 - `.studio/studio.sqlite` 是 Studio 的本地运行态，用于任务看板查询、执行记录、索引和缓存。
-- SQLite 数据可以由文件事实源重建；删除数据库不会丢失产品定义。
+- `apps/api` 的 SQLite 是当前示例正式后端的数据存储，由 Prisma 管理；Product Studio 不启动、不连接它。
+- Studio 的 SQLite 数据可以由交付文件重建；删除数据库不会丢失产品定义。正式应用 SQLite 中的业务数据不在此重建范围内。
 - 需要持久化的计划、任务和测试变更，必须回写对应文件后再同步 SQLite。
-- SQLite 文件不提交到 Git。
+- Studio 的 SQLite 文件不提交到 Git；正式应用数据库文件也不应作为产品事实源提交。
 
 ---
 
 ## 12. 设计语言与组件约束
 
-正式前端技术选型已确认：
+当前示例仓的正式前端技术选型：
 
 ```text
-React + shadcn + Tailwind
+React + Vite + shadcn + Tailwind
 ```
 
-设计语言采用上述体系的语义和视觉风格。原型不依赖这些第三方包，但必须复用同一套 token 与组件语义。
+设计语言基于上述体系的语义和视觉风格。正式前端技术栈可在后续产品中替换，但必须继续遵守 `tokens.json`、组件语义和样式约束。原生 HTML 原型不依赖这些第三方包，但复用同一套 token 与组件语义。
 
 设计语言由三部分组成：
 
@@ -587,7 +611,7 @@ React + shadcn + Tailwind
 
 - 颜色、间距、圆角、阴影不得在页面中随意硬编码
 - 组件变体和状态必须在 `components.json` 中登记
-- 正式前端通过 shadcn 使用受控组件
+- 当前示例的正式前端通过 shadcn 使用受控组件；替换技术栈时必须提供等价的组件与样式约束
 - 原生 HTML 原型只复用 token 和组件语义，不引入 React 或 shadcn
 - Studio 需要能检查未登记组件、硬编码 token 和不规范状态
 
@@ -776,7 +800,7 @@ Schema 合法
 - `/p/<page-id>` 页面工作台
 - 数据库设计
 - API 设计与接口文档
-- React + shadcn + Tailwind 设计语言、组件和样式约束预览
+- 当前示例栈的设计语言、组件和样式约束预览
 
 ### 阶段 2：交付闭环
 
@@ -802,7 +826,7 @@ Schema 合法
 当前阶段明确不做：
 
 - 多产品共用一个产品交付仓
-- 启动或连接本地数据库
+- 由 Product Studio 启动或连接正式应用数据库
 - 用单 HTML 隐藏切换模拟多个页面
 - 用 Markdown 文档替代可运行产品
 - 为原生 HTML 原型引入 React、Tailwind、shadcn、Vite 或 CDN
@@ -842,18 +866,19 @@ Schema 合法
 2. **Studio 形态**：先在 `apps/studio` 开发和调试，稳定后通过 `packages/studio-cli` 提供 CLI；两者共享 `packages/studio-core`。
 3. **代码范围**：产品仓同时包含正式前端、正式后端、产品、设计、原型和契约。
 4. **原型边界**：原型与正式前端是两条独立资产；原型不参与正式构建和测试。
-5. **正式前端**：直接建立在 `apps/web`，固定采用 React + shadcn + Tailwind。
+5. **正式前端**：直接建立在 `apps/web`；当前示例仓采用 React + Vite + shadcn + Tailwind，后续产品可调整。
 6. **产品清单**：采用根目录 `product.manifest.json`，合并原 `meta.json` 中的产品元信息。
-7. **设计语言**：`design/tokens.json` 是颜色、排版、间距、圆角、阴影和动效的唯一源，并生成 CSS 变量与正式前端主题；`components.json` 和 `rules.md` 维护组件及样式约束。
+7. **正式后端**：当前示例仓采用 Hono.js + SQLite + Prisma；技术栈记录在产品清单中，可随产品调整。
+8. **设计语言**：`design/tokens.json` 是颜色、排版、间距、圆角、阴影和动效的唯一源，并生成 CSS 变量和当前正式前端主题；`components.json` 和 `rules.md` 维护组件及样式约束。
 
 ### 20.2 路由与交付
 
-8. **路由**：需求详情使用 `/requirements/<requirement-id>`；页面继续使用 `/p/<page-id>`。
-9. **交付计划**：使用产品仓内的轻量文件 `product/delivery/plan.json` 作为事实源；使用 `.studio/studio.sqlite` 保存本地任务看板的任务、执行记录和查询缓存；SQLite 可由文件重建，不提交。
-10. **任务管理**：第一版使用本地任务看板，不先对接 GitHub Issues、Linear 或 Jira。
-11. **任务拆分**：采用“规则生成 + AI 补全 + 人工确认”；未经确认的任务保持 `draft`。
-12. **测试范围**：第一版覆盖验收用例、API 契约测试和 E2E。
-13. **完成标准**：验收通过是需求完成的唯一判断标准；代码合并、测试通过和发布都不是完成标准本身。
+9. **路由**：需求详情使用 `/requirements/<requirement-id>`；页面继续使用 `/p/<page-id>`。
+10. **交付计划**：使用产品仓内的轻量文件 `product/delivery/plan.json` 作为事实源；使用 `.studio/studio.sqlite` 保存本地任务看板的任务、执行记录和查询缓存；SQLite 可由文件重建，不提交。
+11. **任务管理**：第一版使用本地任务看板，不先对接 GitHub Issues、Linear 或 Jira。
+12. **任务拆分**：采用“规则生成 + AI 补全 + 人工确认”；未经确认的任务保持 `draft`。
+13. **测试范围**：第一版覆盖验收用例、API 契约测试和 E2E。
+14. **完成标准**：验收通过是需求完成的唯一判断标准；代码合并、测试通过和发布都不是完成标准本身。
 
 ### 20.3 仍需后续细化但不再是方向性问题
 
@@ -888,8 +913,9 @@ Schema 合法
 - `apps/studio` 作为 React Product Studio Web 应用
 - `packages/studio-core` 作为可复用核心能力
 - `packages/studio-cli` 作为稳定后的 CLI 入口
-- 正式前端 `apps/web`，采用 React + shadcn + Tailwind
-- 正式后端 `apps/api`
+- 正式前端 `apps/web`，当前示例采用 React + Vite + shadcn + Tailwind
+- 正式后端 `apps/api`，当前示例采用 Hono.js + SQLite + Prisma
+- 正式技术栈由产品清单声明，允许后续产品调整
 - 根目录 `product.manifest.json` 作为唯一产品清单
 - `design/tokens.json` 作为唯一设计 token 源
 - 组件规范和样式约束
