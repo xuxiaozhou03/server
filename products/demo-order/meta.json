@@ -1,0 +1,9 @@
+{
+  "id": "demo-order",
+  "name": "订单运营中心",
+  "version": "1.2.1",
+  "description": "以需求关联页面，从经营概览、订单与客户操作，到数据库表结构、OpenAPI 契约和 Swagger 风格文档的一体化订单产品原型。",
+  "status": "prototype",
+  "updatedAt": "2026-11-11",
+  "experienceFile": "data/order-list.json"
+}

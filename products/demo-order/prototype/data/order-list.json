@@ -1,0 +1,396 @@
+{
+  "pageTitle": "订单运营中心",
+  "requirements": {
+    "title": "让运营从经营判断走到客户、订单与跟进动作的完整闭环",
+    "summary": "订单运营中心不是一组孤立页面，而是一套从数据库设计、接口契约到可交互产品画布连续演进的交付物。运营可以从概览发现问题，在订单列表筛选与打开详情，从客户视角理解成交关系，并把关键动作沉淀为可审计的数据。",
+    "sections": [
+      {
+        "label": "目标用户",
+        "value": "电商运营、客服、订单跟进人员、产品与研发评审者"
+      },
+      {
+        "label": "核心任务",
+        "value": "看经营信号 → 筛选目标订单 → 查看订单上下文 → 跟进或更新 → 回到客户与经营视角验证结果"
+      },
+      {
+        "label": "产品范围",
+        "value": "经营概览、订单管理、订单详情、跟进动作、客户管理、全局与组合检索、数据库设计、OpenAPI 设计与 Swagger 风格只读文档。"
+      },
+      {
+        "label": "业务规则",
+        "value": "订单号与客户邮箱唯一；金额以最小货币单位存储并由服务端计算；订单状态、付款状态和客户等级使用受控枚举；关键变更与跟进动作写入活动流水。"
+      },
+      {
+        "label": "设计约束",
+        "value": "画布使用原生 HTML/CSS/JS，呈现 Tailwind + shadcn 的 token、层次与组件观感，但不引入 Tailwind、React、shadcn、构建链或 CDN。数据库仅维护设计文档，不启动或连接本地数据库。"
+      }
+    ],
+    "acceptance": [
+      "经营概览展示订单总数、待处理、成交额、待跟进与状态分布，并能进入订单或客户页面",
+      "订单支持关键词、状态、付款状态组合筛选，结果数量和筛选 Chip 同步更新",
+      "订单行可选、可打开详情 Drawer，并完成商品明细、动态时间线、跟进标记与新建订单闭环",
+      "客户支持搜索、等级筛选、订单数和成交额展示，并能跳转到关联订单",
+      "数据库设计能从表、字段、键、索引和关系解释订单聚合，且不依赖运行时数据库",
+      "OpenAPI JSON 可在系统内编辑保存，预览与独立 Swagger 风格文档同步更新",
+      "Tour 能跨页切换、打开指定订单详情，并在交互完成后回到右侧技术闭环入口"
+    ],
+    "items": [
+      {
+        "id": "REQ-01",
+        "title": "经营概览与关键信号",
+        "summary": "让运营在一屏内判断订单规模、待处理量、成交额和待跟进风险，并下钻到订单或客户页面。",
+        "status": "已实现",
+        "owner": "产品 / 运营",
+        "changes": [
+          "建立订单总数、待处理、成交额和待跟进四个经营信号。",
+          "让指标与订单、跟进状态使用同一份数据源，并可下钻到订单或客户。"
+        ],
+        "acceptance": [
+          "一屏内可以看到订单总数、待处理、成交额和待跟进数量。",
+          "指标会随订单与跟进状态更新。",
+          "可从概览进入订单列表、客户列表和新建订单流程。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items",
+          "follow_ups"
+        ],
+        "operations": [
+          "getDashboard",
+          "listOrders",
+          "listCustomers"
+        ]
+      },
+      {
+        "id": "REQ-02",
+        "title": "订单组合筛选",
+        "summary": "支持关键词、订单状态与付款状态组合筛选，并让结果数量和已选条件始终可见。",
+        "status": "已实现",
+        "owner": "产品 / 前端",
+        "changes": [
+          "增加关键词、订单状态、付款状态组合筛选与可清除的筛选 Chip。",
+          "结果数量、列表和已选条件保持同步。"
+        ],
+        "acceptance": [
+          "组合筛选后，结果数量、列表和筛选 Chip 同步更新。",
+          "筛选条件可单独清除，也可一键恢复全部订单。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items"
+        ],
+        "operations": [
+          "listOrders"
+        ]
+      },
+      {
+        "id": "REQ-03",
+        "title": "订单列表决策上下文",
+        "summary": "订单行需要同时表达客户、商品、金额、履约、付款和跟进责任，支持进入详情而不丢失列表上下文。",
+        "status": "已实现",
+        "owner": "产品 / 前端",
+        "changes": [
+          "补充客户、商品、金额、履约、付款和跟进人的列表上下文。",
+          "订单行可直接进入详情 Drawer，并保留当前列表筛选条件。"
+        ],
+        "acceptance": [
+          "每个订单行能表达完成判断所需的最小业务上下文。",
+          "打开详情不会丢失列表位置和筛选状态。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items",
+          "follow_ups"
+        ],
+        "operations": [
+          "listOrders",
+          "getOrder"
+        ]
+      },
+      {
+        "id": "REQ-04",
+        "title": "订单详情与跟进闭环",
+        "summary": "在 Drawer 中查看商品、地址、动态与备注，并完成跟进标记或新建订单等动作。",
+        "status": "已实现",
+        "owner": "产品 / 前端",
+        "changes": [
+          "增加订单详情 Drawer、商品明细、配送信息与动态时间线。",
+          "增加标记已跟进和新建订单动作，并同步列表与经营指标。"
+        ],
+        "acceptance": [
+          "打开详情后可看到商品、地址、动态和备注。",
+          "标记已跟进后列表与经营指标同步更新。",
+          "新建订单后可在订单列表与概览中看到结果。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items",
+          "order_activities",
+          "follow_ups"
+        ],
+        "operations": [
+          "createOrder",
+          "getOrder",
+          "updateOrder",
+          "markOrderFollowedUp"
+        ]
+      },
+      {
+        "id": "REQ-05",
+        "title": "客户视角与订单关联",
+        "summary": "从客户档案聚合订单数与累计成交，并通过搜索和等级筛选识别关系，再回到关联订单。",
+        "status": "已实现",
+        "owner": "产品 / 前端",
+        "changes": [
+          "增加客户搜索与 VIP、企业、普通等级筛选。",
+          "为客户卡片增加订单数、累计成交和关联订单入口。"
+        ],
+        "acceptance": [
+          "搜索和等级筛选能收敛客户结果。",
+          "客户卡片展示的订单数与累计成交来自当前订单数据。",
+          "进入关联订单时自动携带客户筛选条件。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items"
+        ],
+        "operations": [
+          "listCustomers",
+          "getCustomer",
+          "listOrders"
+        ]
+      },
+      {
+        "id": "REQ-06",
+        "title": "数据与接口设计闭环",
+        "summary": "从表结构开始维护业务模型，在系统内设计 OpenAPI，并生成可评审的 Swagger 风格接口文档。",
+        "status": "已实现",
+        "owner": "研发 / 产品",
+        "changes": [
+          "以五张表和四条关系定义订单聚合，先维护字段、键、索引和关系。",
+          "以 OpenAPI JSON 维护接口契约，并由同一份契约生成只读接口文档。"
+        ],
+        "acceptance": [
+          "数据库设计能解释订单核心实体及关系，不依赖运行时数据库。",
+          "OpenAPI 可在系统内校验并保存。",
+          "接口文档与保存后的 OpenAPI 契约同步。"
+        ],
+        "tables": [
+          "customers",
+          "orders",
+          "order_items",
+          "order_activities",
+          "follow_ups"
+        ],
+        "operations": [
+          "getDashboard",
+          "listOrders",
+          "createOrder",
+          "getOrder",
+          "updateOrder",
+          "markOrderFollowedUp",
+          "listCustomers",
+          "getCustomer"
+        ],
+        "designPages": [
+          "database",
+          "api",
+          "docs"
+        ]
+      }
+    ]
+  },
+  "technical": {
+    "title": "设计资产驱动，不启动数据库",
+    "summary": "产品画布、数据库设计与接口契约由 Node 统一承载。数据库表结构以 schema.json 作为可评审设计源，API 以 openapi.json 作为唯一运行时数据源，两者共同支撑前端的业务语义与后续服务实现。",
+    "flow": [
+      {
+        "step": "01",
+        "title": "数据模型先行",
+        "detail": "以 customers、orders、order_items、order_activities、follow_ups 五张表和四条关系定义订单聚合，先明确主键、外键、唯一性、枚举与索引，再推进接口和界面。"
+      },
+      {
+        "step": "02",
+        "title": "接口契约约束交互",
+        "detail": "OpenAPI 描述概览、订单查询与变更、跟进和客户接口；请求与响应 Schema 复用数据库语义，操作结果可以通过文档评审与联调。"
+      },
+      {
+        "step": "03",
+        "title": "原生画布承载业务闭环",
+        "detail": "左侧 HTML 画布无需构建即可运行，页面状态与支付、履约、跟进动作联动；Node 仅负责工作台、体验数据和设计资产，不承担本地数据库角色。"
+      },
+      {
+        "step": "04",
+        "title": "文档与验证同步",
+        "detail": "数据库页、API 设计页和只读文档均由服务端原生渲染；validate 校验 schema、OpenAPI、Tour 和资源约束，保证设计资产不会悄悄脱节。"
+      }
+    ],
+    "designLinks": [
+      "数据库设计由表、字段、键、索引和关系共同定义",
+      "接口契约以 OpenAPI JSON 为唯一设计源",
+      "本版本不启动 SQLite / PostgreSQL / MySQL，也不需要 Swagger UI 运行时"
+    ],
+    "checks": [
+      "已完成：经营概览、订单筛选与详情、新建订单、跟进、客户管理、跨页 Tour",
+      "已完成：5 张表与 4 条关系的数据库可视化，8 个 OpenAPI 操作与 14 个 Schema",
+      "已完成：系统内 OpenAPI JSON 编辑保存、即时预览与只读接口文档",
+      "待接入：真实鉴权、分页服务、审计写入、并发更新与生产数据源",
+      "验证约束：不引入 React / Vite / Tailwind 构建链，不使用 CDN，不启动本地数据库"
+    ]
+  },
+  "tour": [
+    {
+      "id": "overview",
+      "page": "dashboard",
+      "targetSelector": ".metric-grid",
+      "title": "从经营信号开始",
+      "description": "概览先回答今天要关注什么：待处理、成交额、待跟进和状态分布共同构成运营的判断入口，再下钻到具体订单与客户。",
+      "requirementId": "REQ-01",
+      "placement": "bottom"
+    },
+    {
+      "id": "orders-filter",
+      "page": "orders",
+      "targetSelector": "#filter-card",
+      "title": "把复杂列表收敛成工作队列",
+      "description": "关键词、订单状态和付款状态可以组合筛选。列表、结果数量与筛选 Chip 同步变化，避免运营在多页面之间反复寻找。",
+      "requirementId": "REQ-02",
+      "placement": "bottom"
+    },
+    {
+      "id": "orders-table",
+      "page": "orders",
+      "targetSelector": "#order-table",
+      "title": "一屏完成订单判断",
+      "description": "订单号、客户、商品、金额、履约与付款状态共同构成决策所需的最小上下文；点击行即可进入详情，不丢失当前列表位置。",
+      "requirementId": "REQ-03",
+      "placement": "top"
+    },
+    {
+      "id": "order-drawer",
+      "page": "orders",
+      "openOrder": "ORD-1048",
+      "targetSelector": ".order-drawer",
+      "title": "在上下文中处理，而不是跳出流程",
+      "description": "详情 Drawer 展开商品明细、配送信息和动态时间线；标记跟进会更新列表与后续经营指标，形成从判断到动作的闭环。",
+      "requirementId": "REQ-04",
+      "placement": "left"
+    },
+    {
+      "id": "customers",
+      "page": "customers",
+      "targetSelector": "#customer-grid",
+      "title": "从客户视角理解长期价值",
+      "description": "客户管理把订单数和累计成交聚合到客户档案中；搜索与等级筛选帮助运营识别高价值关系，并可回到关联订单继续处理。",
+      "requirementId": "REQ-05",
+      "placement": "top"
+    },
+    {
+      "id": "technical-loop",
+      "targetSelector": ".design-entry-grid",
+      "targetScope": "workspace",
+      "title": "数据库与接口是同一套产品语义",
+      "description": "技术闭环入口把表结构、OpenAPI 契约与接口文档放在一起。先维护数据库设计，再维护 API，最后生成可评审的 Swagger 风格文档，不启动本地数据库。",
+      "requirementId": "REQ-06",
+      "placement": "left"
+    }
+  ],
+  "pages": {
+    "dashboard": {
+      "route": "/p/dashboard",
+      "title": "经营概览",
+      "eyebrow": "PAGE / DASHBOARD",
+      "requirementIds": [
+        "REQ-01"
+      ],
+      "summary": "先回答今天要关注什么，再把经营信号下钻到订单与客户。",
+      "changes": [
+        "建立订单总数、待处理、成交额和待跟进四个指标，并让数值由同一份订单数据计算。",
+        "增加订单状态分布与最近动态，提供进入订单管理及新建订单的明确路径。"
+      ],
+      "acceptance": [
+        "指标会随订单和跟进状态更新。",
+        "可从概览进入订单列表、客户列表和新建订单流程。"
+      ],
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "follow_ups"
+      ],
+      "operations": [
+        "getDashboard",
+        "listOrders",
+        "listCustomers"
+      ]
+    },
+    "orders": {
+      "route": "/p/orders",
+      "title": "订单管理",
+      "eyebrow": "PAGE / ORDERS",
+      "requirementIds": [
+        "REQ-02",
+        "REQ-03",
+        "REQ-04"
+      ],
+      "summary": "把筛选、判断和处理放在同一条工作流中，详情不打断列表上下文。",
+      "changes": [
+        "增加关键词、订单状态、付款状态组合筛选与可清除的筛选 Chip。",
+        "补充客户、商品、金额、履约、付款和跟进人的列表上下文。",
+        "增加订单详情 Drawer、商品明细、动态时间线、跟进标记与新建订单。"
+      ],
+      "acceptance": [
+        "组合筛选后，结果数量、列表和筛选 Chip 同步更新。",
+        "打开详情后可看到商品、地址、动态和备注，并能标记已跟进。",
+        "从客户页面进入时，订单列表自动应用客户条件。"
+      ],
+      "tables": [
+        "customers",
+        "orders",
+        "order_items",
+        "order_activities",
+        "follow_ups"
+      ],
+      "operations": [
+        "listOrders",
+        "createOrder",
+        "getOrder",
+        "updateOrder",
+        "markOrderFollowedUp"
+      ]
+    },
+    "customers": {
+      "route": "/p/customers",
+      "title": "客户管理",
+      "eyebrow": "PAGE / CUSTOMERS",
+      "requirementIds": [
+        "REQ-05"
+      ],
+      "summary": "用订单聚合理解客户关系，并让客户成为订单处理的下钻入口。",
+      "changes": [
+        "增加客户搜索与 VIP、企业、普通等级筛选。",
+        "为客户卡片增加订单数、累计成交与查看关联订单入口。"
+      ],
+      "acceptance": [
+        "搜索和等级筛选能收敛客户结果。",
+        "客户卡片展示的订单数与累计成交来自当前订单数据。",
+        "进入关联订单时自动携带客户筛选条件。"
+      ],
+      "tables": [
+        "customers",
+        "orders",
+        "order_items"
+      ],
+      "operations": [
+        "listCustomers",
+        "getCustomer",
+        "listOrders"
+      ]
+    }
+  }
+}
